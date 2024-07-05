@@ -1,3 +1,4 @@
+
 // start I2C communication and send commands to set up the MPU6050.
 // A command is set by starting a transmission, writing a byte (written here in hexadecimal) to signal what register should be changed,
 // and then sending a new register value
@@ -20,9 +21,11 @@ void setupMPU6050() {
   Wire.write(0x1A);
   Wire.write(0x00);  // buffering
   Wire.endTransmission(true);  // end setup mpu6050
+
 }
 
 void readMPU6050() {
+ 
   Wire.beginTransmission(0x68);
   Wire.write(0x3B);  // location of first byte of data
   Wire.endTransmission(false);
@@ -46,11 +49,16 @@ void readMPU6050() {
   // complementary filter combines gyro and accelerometer tilt data in a way that takes advantage of short term accuracy of the gyro and long term accuracy of the accelerometer
   pitch1 = COMPLEMENTARY_FILTER_CONSTANT * ((pitch1) + rotationDPS_X * (micros() - lastCalcedMPU6050) / 1000000.000)  // add rotation rate as measured by the gyro to current pitch - valid in short term
           + (1 - COMPLEMENTARY_FILTER_CONSTANT) * (degrees(atan2(accelerationY, accelerationZ)) - pitchOffset * pitchInverter);   // in the long term drift towards the angle of gravity measured by the accelerometer
-  pitch = pitchInverter * (pitch1 + pitch2 + pitch3)/3;
-  //Serial.println();
-  //Serial.println(pitch);
+  pitch = pitchInverter * pitch1;
+  //pitch = pitchInverter * (pitch1 + pitch2 + pitch3)/3;
+  //pitch = pitchInverter * ((pitch1 * 0.6) + (pitch2 * 0.3) + (pitch3 * 0.1));
+ 
   
-  if (robotEnabled) {  // only adjust pitchOffset when the robot is enabled
+  //mpu.update();
+  //pitch = -mpu.getAngleX();
+
+  //if (robotEnabled) {  // only adjust pitchOffset when the robot is enabled
+  if (robotEnabled && (speedVal == 0)) {  // only adjust pitchOffset when the robot is enabled AND when peedVal = 0
     pitchOffset = (pitch + pitchOffset) * (1 - PITCH_OFFSET_CHANGE) + pitchOffset * (PITCH_OFFSET_CHANGE);  // slowly move pitchOffset towards the current pitch value, the overall average pitch value should be close to the balance point
   }
   lastCalcedMPU6050 = micros();  // record time of last calculation so we know next time how much time has passed (how much time to integrate rotation rate for)
